@@ -6,13 +6,24 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 )
 
-func api(addr string) error {
-	return http.ListenAndServe(addr, newRouter())
+type api struct {
+	db *sqlx.DB
 }
 
-func newRouter() http.Handler {
+func newAPI(dbconn string) (*api, error) {
+	db, err := sqlx.Connect("postgres", dbconn)
+	if err != nil {
+		return nil, errors.Wrap(err, "connecting to DB failed")
+	}
+	return &api{db: db}, nil
+}
+
+func newRouter(api *api) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -22,7 +33,7 @@ func newRouter() http.Handler {
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.Route("/payments", func(r chi.Router) {
-		r.Get("/", listPayments)
+		r.Get("/", api.listPayments)
 	})
 
 	return r

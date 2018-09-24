@@ -2,6 +2,8 @@ package payment
 
 import (
 	"net/http"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // Type is the type of the payment resource
@@ -9,7 +11,17 @@ const Type = "Payment"
 
 // Payment is a single payment
 type Payment struct {
-	ID string `json:"id"`
+	ID string `db:"id" json:"id"`
+}
+
+// Select gets all payments
+func Select(db *sqlx.DB) ([]Payment, error) {
+	payments := []Payment{}
+	if err := db.Select(&payments, "SELECT * FROM payments"); err != err {
+		return nil, err
+	}
+
+	return payments, nil
 }
 
 // Resource is a single payment resource
