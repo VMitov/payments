@@ -11,7 +11,8 @@ const Type = "Payment"
 
 // Payment is a single payment
 type Payment struct {
-	ID string `db:"id" json:"id"`
+	ID     string `db:"id" json:"id"`
+	Amount string `db:"amount" json:"amount"`
 }
 
 // Select gets all payments
