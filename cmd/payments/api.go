@@ -11,6 +11,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+type key int
+
+const (
+	keyPayments key = iota
+)
+
 type api struct {
 	db *sqlx.DB
 }
@@ -34,6 +40,11 @@ func newRouter(api *api) http.Handler {
 
 	r.Route("/payments", func(r chi.Router) {
 		r.Get("/", api.listPayments)
+
+		r.Route("/{paymentID}", func(r chi.Router) {
+			r.Get("/", api.getPayment)
+		})
+
 	})
 
 	return r

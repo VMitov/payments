@@ -25,11 +25,26 @@ func Select(db *sqlx.DB) ([]Payment, error) {
 	return payments, nil
 }
 
+// Get gets single payments
+func Get(db *sqlx.DB, id string) (*Payment, error) {
+	payment := Payment{}
+	if err := db.Get(&payment, "SELECT * FROM payments WHERE id=$1", id); err != err {
+		return nil, err
+	}
+
+	return &payment, nil
+}
+
 // Resource is a single payment resource
 type Resource struct {
 	*Payment
 
 	Type string `json:"type"`
+}
+
+// Render implements render.Render
+func (resource *Resource) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }
 
 // ListResource is a list of payments resource
@@ -40,7 +55,7 @@ type ListResource struct {
 	} `json:"links"`
 }
 
-// Render writes json representation of the ListResource to http.ResponseWriter
+// Render implements render.Render
 func (list *ListResource) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
