@@ -7,3 +7,11 @@ docker run \
     --publish 5432:5432 \
     postgres
 ```
+
+## Start the service in container
+```
+docker build --tag=payments .
+docker run \
+    --network=host \
+    payments -db "postgres://postgres@127.0.0.1:5432/payments?sslmode=disable"
+```
