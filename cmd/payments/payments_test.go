@@ -34,6 +34,9 @@ func TestPayments(t *testing.T) {
 				"And the payload should have no payments": func(resp *httptest.ResponseRecorder) {
 					So(resp.Body.String(), ShouldEqual, `{"data":[],"links":{"self":""}}`+"\n")
 				},
+				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
 			},
 		},
 		"GETList": {
@@ -79,6 +82,9 @@ func TestPayments(t *testing.T) {
 
 					So(string(resource), ShouldEqual, strings.TrimRight(string(expected), "\n"))
 				},
+				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
 			},
 		},
 		"GETOne": {
@@ -98,6 +104,9 @@ func TestPayments(t *testing.T) {
 					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual,
 						`{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.21","type":"Payment"}`)
 				},
+				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
 			},
 		},
 		"GETMissing": {
@@ -111,6 +120,9 @@ func TestPayments(t *testing.T) {
 			thens: map[string]func(resp *httptest.ResponseRecorder){
 				"Then the response should be a 200": func(resp *httptest.ResponseRecorder) {
 					So(resp.Code, ShouldEqual, 404)
+				},
+				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
 				},
 			},
 		},
@@ -135,6 +147,9 @@ func TestPayments(t *testing.T) {
 				"And the payload should be as the one of the request": func(resp *httptest.ResponseRecorder) {
 					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.21","type":"Payment"}`)
 				},
+				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
 			},
 		},
 		"Update": {
@@ -157,6 +172,59 @@ func TestPayments(t *testing.T) {
 				"And the payload should be the updated payment": func(resp *httptest.ResponseRecorder) {
 					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.22","type":"Payment"}`)
 				},
+				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
+			},
+		},
+		"Delete": {
+			given: "Given a HTTP request to DELETE:/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43",
+			givenF: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}).
+					AddRow("4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", 10022))
+
+				mock.ExpectExec("DELETE FROM payments").
+					WithArgs("4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+			getReq: func() *http.Request {
+				return httptest.NewRequest("DELETE", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", nil)
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 200": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 200)
+				},
+			},
+		},
+		"DeleteNonExisting": {
+			given: "Given a HTTP request to DELETE:/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43 which is not existing",
+			givenF: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}))
+
+				mock.ExpectExec("DELETE FROM payments").
+					WithArgs("4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43")
+			},
+			getReq: func() *http.Request {
+				return httptest.NewRequest("DELETE", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", nil)
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 404": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 404)
+				},
+			},
+		},
+		"DeleteInvalidUUID": {
+			given: "Given a HTTP request to DELETE:/payments/bad-uuid with wrong uuid",
+			givenF: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}))
+			},
+			getReq: func() *http.Request {
+				return httptest.NewRequest("DELETE", "/payments/bad-uuid", nil)
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 404": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 404)
+				},
 			},
 		},
 	}
@@ -178,10 +246,6 @@ func TestPayments(t *testing.T) {
 					req := tc.getReq()
 					resp := httptest.NewRecorder()
 					newRouter(&api{db: sqlxDB}).ServeHTTP(resp, req)
-
-					Convey("The Content-Type should be json", func() {
-						So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
-					})
 
 					for then, f := range tc.thens {
 						Convey(then, func() {

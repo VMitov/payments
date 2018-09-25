@@ -107,6 +107,30 @@ func (api *api) getPayment(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (api *api) deletePayment(w http.ResponseWriter, r *http.Request) {
+	paymentID := chi.URLParam(r, "paymentID")
+	if paymentID == "" {
+		render.Render(w, r, errNotFound)
+		return
+	}
+
+	pay, err := payment.Get(api.db, paymentID)
+	if err != nil {
+		render.Render(w, r, errRender(err))
+		return
+	}
+
+	if pay.ID == "" {
+		render.Render(w, r, errNotFound)
+		return
+	}
+
+	if err := payment.Delete(api.db, paymentID); err != nil {
+		render.Render(w, r, errInvalidRequest(err))
+		return
+	}
+}
+
 func newPaymentListResponse(paymentList []payment.Payment) *payment.ListResource {
 	listResource := &payment.ListResource{
 		Data: []*payment.Resource{},

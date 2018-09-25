@@ -59,6 +59,12 @@ func Update(db *sqlx.DB, id string, pay *Payment) error {
 	return err
 }
 
+// Delete deleted payment
+func Delete(db *sqlx.DB, id string) error {
+	_, err := db.Exec(db.Rebind(`DELETE FROM payments WHERE id=?`), id)
+	return err
+}
+
 // Select gets all payments
 func Select(db *sqlx.DB) ([]Payment, error) {
 	payments := []Payment{}
