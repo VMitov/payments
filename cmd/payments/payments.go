@@ -44,24 +44,35 @@ func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pay, err := payment.Get(api.db, paymentID)
+	if err != nil {
+		render.Render(w, r, errRender(err))
+		return
+	}
+
+	if pay.ID == "" {
+		render.Render(w, r, errNotFound)
+		return
+	}
+
 	data := &payment.Resource{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, errInvalidRequest(err))
 		return
 	}
 
-	pay, err := payment.NewFromResource(data)
+	newPay, err := payment.NewFromResource(data)
 	if err != nil {
 		render.Render(w, r, errInvalidRequest(err))
 		return
 	}
 
-	if err := payment.Update(api.db, paymentID, pay); err != nil {
+	if err := payment.Update(api.db, paymentID, newPay); err != nil {
 		render.Render(w, r, errInvalidRequest(err))
 		return
 	}
 
-	newPay, err := payment.Get(api.db, paymentID)
+	newPay, err = payment.Get(api.db, paymentID)
 	if err != nil {
 		render.Render(w, r, errRender(err))
 		return

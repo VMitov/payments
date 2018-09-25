@@ -118,7 +118,24 @@ func TestPayments(t *testing.T) {
 				return httptest.NewRequest("GET", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", nil)
 			},
 			thens: map[string]func(resp *httptest.ResponseRecorder){
-				"Then the response should be a 200": func(resp *httptest.ResponseRecorder) {
+				"Then the response should be a 404": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 404)
+				},
+				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
+			},
+		},
+		"GETBadUUID": {
+			given: "Given a HTTP request for /payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43",
+			givenF: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}))
+			},
+			getReq: func() *http.Request {
+				return httptest.NewRequest("GET", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", nil)
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 404": func(resp *httptest.ResponseRecorder) {
 					So(resp.Code, ShouldEqual, 404)
 				},
 				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
@@ -155,6 +172,9 @@ func TestPayments(t *testing.T) {
 		"Update": {
 			given: "Given a HTTP request for PUT:/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43",
 			givenF: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}).
+					AddRow("4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", 10022))
+
 				mock.ExpectExec("UPDATE payments").
 					WithArgs(10022, "4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43").
 					WillReturnResult(sqlmock.NewResult(1, 1))
@@ -174,6 +194,34 @@ func TestPayments(t *testing.T) {
 				},
 				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
 					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
+			},
+		},
+		"UpdateMissing": {
+			given: "Given a HTTP request for PUT:/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43",
+			givenF: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}))
+			},
+			getReq: func() *http.Request {
+				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"amount": "100.22", "type": "Payment"}`))
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 404": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 404)
+				},
+			},
+		},
+		"UpdateBadUUID": {
+			given: "Given a HTTP request for PUT:/payments/bad-uuid",
+			givenF: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}))
+			},
+			getReq: func() *http.Request {
+				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"amount": "100.22", "type": "Payment"}`))
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 404": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 404)
 				},
 			},
 		},
@@ -200,9 +248,6 @@ func TestPayments(t *testing.T) {
 			given: "Given a HTTP request to DELETE:/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43 which is not existing",
 			givenF: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}))
-
-				mock.ExpectExec("DELETE FROM payments").
-					WithArgs("4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43")
 			},
 			getReq: func() *http.Request {
 				return httptest.NewRequest("DELETE", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", nil)
@@ -229,15 +274,15 @@ func TestPayments(t *testing.T) {
 		},
 	}
 
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer db.Close()
+			sqlxDB := sqlx.NewDb(db, "sqlmock")
+
 			Convey(tc.given, t, func() {
 				if tc.givenF != nil {
 					tc.givenF(mock)
@@ -254,6 +299,10 @@ func TestPayments(t *testing.T) {
 					}
 				})
 			})
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
 		})
 	}
 }
