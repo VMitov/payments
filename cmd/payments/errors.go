@@ -10,6 +10,15 @@ var errNotFound = &errors.ErrResponse{
 	StatusText:     "Resource not found.",
 }
 
+func errInvalidRequest(err error) render.Renderer {
+	return &errors.ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 400,
+		StatusText:     "Invalid request.",
+		ErrorText:      err.Error(),
+	}
+}
+
 func errRender(err error) render.Renderer {
 	return &errors.ErrResponse{
 		Err:            err,

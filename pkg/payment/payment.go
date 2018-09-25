@@ -1,9 +1,11 @@
 package payment
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/shopspring/decimal"
 )
 
 // Type is the type of the payment resource
@@ -12,7 +14,39 @@ const Type = "Payment"
 // Payment is a single payment
 type Payment struct {
 	ID     string `db:"id" json:"id"`
-	Amount string `db:"amount" json:"amount"`
+	Amount int64  `db:"amount" json:"-"`
+}
+
+// NewFromResource returns Payment from Resource
+func NewFromResource(res *Resource) (*Payment, error) {
+	d, err := decimal.NewFromString(res.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.Payment == nil {
+		res.Payment = &Payment{}
+	}
+	res.Payment.Amount = d.Mul(decimal.New(100, 0)).IntPart()
+	return res.Payment, nil
+}
+
+// Create persist a payment
+func Create(db *sqlx.DB, pay *Payment) (id string, err error) {
+	rows, err := db.Queryx(
+		db.Rebind(`INSERT INTO payments (amount) VALUES (?) RETURNING id`),
+		10021,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	if !rows.Next() {
+		return "", fmt.Errorf("error getting id")
+	}
+
+	rows.Scan(&id)
+	return id, nil
 }
 
 // Select gets all payments
@@ -39,7 +73,22 @@ func Get(db *sqlx.DB, id string) (*Payment, error) {
 type Resource struct {
 	*Payment
 
-	Type string `json:"type"`
+	Amount string `json:"amount"`
+	Type   string `json:"type"`
+}
+
+// NewResource create new resource from Payment
+func NewResource(p *Payment) *Resource {
+	return &Resource{
+		Payment: p,
+		Type:    Type,
+		Amount:  fmt.Sprintf("%.2f", float64(p.Amount)/100),
+	}
+}
+
+// Bind implements render.Binder
+func (resource *Resource) Bind(r *http.Request) error {
+	return nil
 }
 
 // Render implements render.Render

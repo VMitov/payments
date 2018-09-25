@@ -8,6 +8,35 @@ import (
 	"github.com/go-chi/render"
 )
 
+func (api *api) createPayment(w http.ResponseWriter, r *http.Request) {
+	data := &payment.Resource{}
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, errInvalidRequest(err))
+		return
+	}
+
+	pay, err := payment.NewFromResource(data)
+	if err != nil {
+		render.Render(w, r, errInvalidRequest(err))
+		return
+	}
+
+	id, err := payment.Create(api.db, pay)
+	if err != nil {
+		render.Render(w, r, errInvalidRequest(err))
+		return
+	}
+
+	newPay, err := payment.Get(api.db, id)
+	if err != nil {
+		render.Render(w, r, errRender(err))
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Render(w, r, payment.NewResource(newPay))
+}
+
 func (api *api) listPayments(w http.ResponseWriter, r *http.Request) {
 	payments, err := payment.Select(api.db)
 	if err != nil {
@@ -28,18 +57,18 @@ func (api *api) getPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payment, err := payment.Get(api.db, paymentID)
+	pay, err := payment.Get(api.db, paymentID)
 	if err != nil {
 		render.Render(w, r, errRender(err))
 		return
 	}
 
-	if payment.ID == "" {
+	if pay.ID == "" {
 		render.Render(w, r, errNotFound)
 		return
 	}
 
-	if err := render.Render(w, r, newPaymentResponse(payment)); err != nil {
+	if err := render.Render(w, r, payment.NewResource(pay)); err != nil {
 		render.Render(w, r, errRender(err))
 		return
 	}
@@ -50,12 +79,8 @@ func newPaymentListResponse(paymentList []payment.Payment) *payment.ListResource
 		Data: []*payment.Resource{},
 	}
 	for i := range paymentList {
-		listResource.Data = append(listResource.Data, newPaymentResponse(&paymentList[i]))
+		listResource.Data = append(listResource.Data, payment.NewResource(&paymentList[i]))
 	}
 
 	return listResource
-}
-
-func newPaymentResponse(p *payment.Payment) *payment.Resource {
-	return &payment.Resource{Payment: p, Type: payment.Type}
 }

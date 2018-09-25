@@ -40,6 +40,7 @@ func newRouter(api *api) http.Handler {
 
 	r.Route("/payments", func(r chi.Router) {
 		r.Get("/", api.listPayments)
+		r.Post("/", api.createPayment)
 
 		r.Route("/{paymentID}", func(r chi.Router) {
 			r.Get("/", api.getPayment)
