@@ -132,9 +132,31 @@ func TestPayments(t *testing.T) {
 			Convey("When the request is handled by the Router", func() {
 				newRouter(&api{db: sqlxDB}).ServeHTTP(resp, req)
 				Convey("Then the response should be a 201", func() {
-					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.21","type":"Payment"}`)
 					So(resp.Code, ShouldEqual, 201)
 					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.21","type":"Payment"}`)
+				})
+			})
+		})
+	})
+
+	t.Run("TestPaymentsUpdate", func(t *testing.T) {
+		Convey("Given a HTTP request for PUT:/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", t, func() {
+			mock.ExpectExec("UPDATE payments").
+				WithArgs(10022, "4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43").
+				WillReturnResult(sqlmock.NewResult(1, 1))
+
+			mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}).
+				AddRow("4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", 10022))
+
+			req := httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"amount": "100.22", "type": "Payment"}`))
+			resp := httptest.NewRecorder()
+			Convey("When the request is handled by the Router", func() {
+				newRouter(&api{db: sqlxDB}).ServeHTTP(resp, req)
+				Convey("Then the response should be a 200", func() {
+					So(resp.Code, ShouldEqual, 200)
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.22","type":"Payment"}`)
 				})
 			})
 		})

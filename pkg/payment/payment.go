@@ -49,6 +49,16 @@ func Create(db *sqlx.DB, pay *Payment) (id string, err error) {
 	return id, nil
 }
 
+// Update updates payment
+func Update(db *sqlx.DB, id string, pay *Payment) error {
+	_, err := db.Exec(
+		db.Rebind(`UPDATE payments SET amount=? WHERE id=?`),
+		pay.Amount, id,
+	)
+
+	return err
+}
+
 // Select gets all payments
 func Select(db *sqlx.DB) ([]Payment, error) {
 	payments := []Payment{}
