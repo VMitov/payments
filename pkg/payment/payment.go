@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/VMitov/payments/pkg/links"
 	"github.com/jmoiron/sqlx"
 	"github.com/shopspring/decimal"
 )
@@ -19,16 +20,16 @@ type Payment struct {
 
 // NewFromResource returns Payment from Resource
 func NewFromResource(res *Resource) (*Payment, error) {
-	d, err := decimal.NewFromString(res.Amount)
+	d, err := decimal.NewFromString(res.Data.Amount)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.Payment == nil {
-		res.Payment = &Payment{}
+	if res.Data.Payment == nil {
+		res.Data.Payment = &Payment{}
 	}
-	res.Payment.Amount = d.Mul(decimal.New(100, 0)).IntPart()
-	return res.Payment, nil
+	res.Data.Payment.Amount = d.Mul(decimal.New(100, 0)).IntPart()
+	return res.Data.Payment, nil
 }
 
 // Create persist a payment
@@ -85,25 +86,48 @@ func Get(db *sqlx.DB, id string) (*Payment, error) {
 	return &payment, nil
 }
 
-// Resource is a single payment resource
-type Resource struct {
+// ResourceData is the data of the payment resource
+type ResourceData struct {
 	*Payment
 
 	Amount string `json:"amount"`
 	Type   string `json:"type"`
+
+	links.Resource
+}
+
+func newResourceData(p *Payment, self string) *ResourceData {
+	return &ResourceData{
+		Payment:  p,
+		Type:     Type,
+		Amount:   fmt.Sprintf("%.2f", float64(p.Amount)/100),
+		Resource: links.Resource{Links: links.Links{Self: self}},
+	}
+}
+
+// Resource is a single payment resource
+type Resource struct {
+	Data *ResourceData `json:"data"`
 }
 
 // NewResource create new resource from Payment
-func NewResource(p *Payment) *Resource {
+func NewResource(p *Payment, self string) *Resource {
 	return &Resource{
-		Payment: p,
-		Type:    Type,
-		Amount:  fmt.Sprintf("%.2f", float64(p.Amount)/100),
+		Data: newResourceData(p, self),
 	}
 }
 
 // Bind implements render.Binder
 func (resource *Resource) Bind(r *http.Request) error {
+	if resource.Data == nil || resource.Data.Type != Type {
+		return fmt.Errorf("no data")
+	}
+
+	_, err := decimal.NewFromString(resource.Data.Amount)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -114,10 +138,23 @@ func (resource *Resource) Render(w http.ResponseWriter, r *http.Request) error {
 
 // ListResource is a list of payments resource
 type ListResource struct {
-	Data  []*Resource `json:"data"`
-	Links struct {
-		Self string `json:"self"`
-	} `json:"links"`
+	Data []*ResourceData `json:"data"`
+	links.Resource
+}
+
+// NewListResource returns new payments list resource
+func NewListResource(payments []Payment, self string) *ListResource {
+	listResource := &ListResource{
+		Data:     []*ResourceData{},
+		Resource: links.Resource{Links: links.Links{Self: self}},
+	}
+	for i := range payments {
+		listResource.Data = append(
+			listResource.Data, newResourceData(&payments[i], self+"/"+payments[i].ID),
+		)
+	}
+
+	return listResource
 }
 
 // Render implements render.Render

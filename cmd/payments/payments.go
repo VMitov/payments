@@ -8,6 +8,14 @@ import (
 	"github.com/go-chi/render"
 )
 
+func newPayment(p *payment.Payment) *payment.Resource {
+	return payment.NewResource(p, "/payments/"+p.ID)
+}
+
+func newPaymentList(ps []payment.Payment) *payment.ListResource {
+	return payment.NewListResource(ps, "/payments")
+}
+
 func (api *api) createPayment(w http.ResponseWriter, r *http.Request) {
 	data := &payment.Resource{}
 	if err := render.Bind(r, data); err != nil {
@@ -34,7 +42,7 @@ func (api *api) createPayment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.Render(w, r, payment.NewResource(newPay))
+	render.Render(w, r, newPayment(newPay))
 }
 
 func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
@@ -44,20 +52,19 @@ func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := &payment.Resource{}
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, errInvalidRequest(err))
+		return
+	}
+
 	pay, err := payment.Get(api.db, paymentID)
 	if err != nil {
 		render.Render(w, r, errRender(err))
 		return
 	}
-
 	if pay.ID == "" {
 		render.Render(w, r, errNotFound)
-		return
-	}
-
-	data := &payment.Resource{}
-	if err := render.Bind(r, data); err != nil {
-		render.Render(w, r, errInvalidRequest(err))
 		return
 	}
 
@@ -78,7 +85,7 @@ func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Render(w, r, payment.NewResource(newPay))
+	render.Render(w, r, newPayment(newPay))
 }
 
 func (api *api) listPayments(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +95,7 @@ func (api *api) listPayments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := render.Render(w, r, newPaymentListResponse(payments)); err != nil {
+	if err := render.Render(w, r, newPaymentList(payments)); err != nil {
 		render.Render(w, r, errRender(err))
 		return
 	}
@@ -112,7 +119,7 @@ func (api *api) getPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := render.Render(w, r, payment.NewResource(pay)); err != nil {
+	if err := render.Render(w, r, newPayment(pay)); err != nil {
 		render.Render(w, r, errRender(err))
 		return
 	}
@@ -140,15 +147,4 @@ func (api *api) deletePayment(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, errInvalidRequest(err))
 		return
 	}
-}
-
-func newPaymentListResponse(paymentList []payment.Payment) *payment.ListResource {
-	listResource := &payment.ListResource{
-		Data: []*payment.Resource{},
-	}
-	for i := range paymentList {
-		listResource.Data = append(listResource.Data, payment.NewResource(&paymentList[i]))
-	}
-
-	return listResource
 }

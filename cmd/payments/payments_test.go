@@ -32,7 +32,7 @@ func TestPayments(t *testing.T) {
 					So(resp.Code, ShouldEqual, 200)
 				},
 				"And the payload should have no payments": func(resp *httptest.ResponseRecorder) {
-					So(resp.Body.String(), ShouldEqual, `{"data":[],"links":{"self":""}}`+"\n")
+					So(resp.Body.String(), ShouldEqual, `{"data":[],"links":{"self":"/payments"}}`+"\n")
 				},
 				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
 					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
@@ -102,7 +102,7 @@ func TestPayments(t *testing.T) {
 				},
 				"And the payload should be the payment with the id from the request": func(resp *httptest.ResponseRecorder) {
 					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual,
-						`{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.21","type":"Payment"}`)
+						`{"data":{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.21","type":"Payment","links":{"self":"/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43"}}}`)
 				},
 				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
 					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
@@ -155,17 +155,42 @@ func TestPayments(t *testing.T) {
 					AddRow("4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", 10021))
 			},
 			getReq: func() *http.Request {
-				return httptest.NewRequest("POST", "/payments", strings.NewReader(`{"amount": "100.21", "type": "Payment"}`))
+				return httptest.NewRequest("POST", "/payments", strings.NewReader(`{"data": {"amount": "100.21", "type": "Payment"}}`))
 			},
 			thens: map[string]func(resp *httptest.ResponseRecorder){
 				"Then the response should be a 201": func(resp *httptest.ResponseRecorder) {
 					So(resp.Code, ShouldEqual, 201)
 				},
 				"And the payload should be as the one of the request": func(resp *httptest.ResponseRecorder) {
-					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.21","type":"Payment"}`)
+					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"data":{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.21","type":"Payment","links":{"self":"/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43"}}}`)
 				},
 				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
 					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
+			},
+		},
+		"CreateNoData": {
+			given: "Given a HTTP request for POST:/payments",
+			getReq: func() *http.Request {
+				return httptest.NewRequest("POST", "/payments", strings.NewReader(`{"data": {}}`))
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 400": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 400)
+				},
+				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
+					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
+			},
+		},
+		"CreateNoPayload": {
+			given: "Given a HTTP request for POST:/payments",
+			getReq: func() *http.Request {
+				return httptest.NewRequest("POST", "/payments", strings.NewReader(`{}`))
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 400": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 400)
 				},
 			},
 		},
@@ -183,17 +208,39 @@ func TestPayments(t *testing.T) {
 					AddRow("4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", 10022))
 			},
 			getReq: func() *http.Request {
-				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"amount": "100.22", "type": "Payment"}`))
+				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"data":{"amount": "100.22", "type": "Payment"}}`))
 			},
 			thens: map[string]func(resp *httptest.ResponseRecorder){
 				"Then the response should be a 200": func(resp *httptest.ResponseRecorder) {
 					So(resp.Code, ShouldEqual, 200)
 				},
 				"And the payload should be the updated payment": func(resp *httptest.ResponseRecorder) {
-					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.22","type":"Payment"}`)
+					So(strings.TrimRight(resp.Body.String(), "\n"), ShouldEqual, `{"data":{"id":"4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43","amount":"100.22","type":"Payment","links":{"self":"/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43"}}}`)
 				},
 				"The Content-Type should be json": func(resp *httptest.ResponseRecorder) {
 					So(resp.HeaderMap["Content-Type"], ShouldContain, "application/json; charset=utf-8")
+				},
+			},
+		},
+		"UpdateNoData": {
+			given: "Given a HTTP request for PUT:/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43",
+			getReq: func() *http.Request {
+				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"data":{}}`))
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 400": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 400)
+				},
+			},
+		},
+		"UpdateNoPayload": {
+			given: "Given a HTTP request for PUT:/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43",
+			getReq: func() *http.Request {
+				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{}`))
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 400": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 400)
 				},
 			},
 		},
@@ -203,7 +250,7 @@ func TestPayments(t *testing.T) {
 				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}))
 			},
 			getReq: func() *http.Request {
-				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"amount": "100.22", "type": "Payment"}`))
+				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"data":{"amount": "100.22", "type": "Payment"}}`))
 			},
 			thens: map[string]func(resp *httptest.ResponseRecorder){
 				"Then the response should be a 404": func(resp *httptest.ResponseRecorder) {
@@ -217,7 +264,7 @@ func TestPayments(t *testing.T) {
 				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}))
 			},
 			getReq: func() *http.Request {
-				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"amount": "100.22", "type": "Payment"}`))
+				return httptest.NewRequest("PUT", "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43", strings.NewReader(`{"data":{"amount": "100.22", "type": "Payment"}}`))
 			},
 			thens: map[string]func(resp *httptest.ResponseRecorder){
 				"Then the response should be a 404": func(resp *httptest.ResponseRecorder) {
