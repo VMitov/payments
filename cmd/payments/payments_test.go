@@ -169,6 +169,17 @@ func TestPayments(t *testing.T) {
 				},
 			},
 		},
+		"CreateNegaviteAmount": {
+			given: "Given a HTTP request for POST:/payments with negative amount",
+			getReq: func() *http.Request {
+				return httptest.NewRequest("POST", "/payments", strings.NewReader(`{"data": {"amount": "-100.21", "type": "Payment"}}`))
+			},
+			thens: map[string]func(resp *httptest.ResponseRecorder){
+				"Then the response should be a 400": func(resp *httptest.ResponseRecorder) {
+					So(resp.Code, ShouldEqual, 400)
+				},
+			},
+		},
 		"CreateNoData": {
 			given: "Given a HTTP request for POST:/payments",
 			getReq: func() *http.Request {

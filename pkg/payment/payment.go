@@ -123,9 +123,13 @@ func (resource *Resource) Bind(r *http.Request) error {
 		return fmt.Errorf("no data")
 	}
 
-	_, err := decimal.NewFromString(resource.Data.Amount)
+	d, err := decimal.NewFromString(resource.Data.Amount)
 	if err != nil {
 		return err
+	}
+
+	if d.Cmp(decimal.New(0, 0)) < 0 {
+		return fmt.Errorf("negative amount")
 	}
 
 	return nil
