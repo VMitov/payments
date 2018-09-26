@@ -1,6 +1,8 @@
 # Payment API Exacmple
 
-## Start db with schema
+## Run the service
+
+### Start db with schema
 ```
 docker run \
     --mount type=bind,source="$(pwd)/database",target=/docker-entrypoint-initdb.d \
@@ -8,7 +10,7 @@ docker run \
     postgres
 ```
 
-## Start the service in container
+### Start the service in container
 ```
 docker build --tag=payments .
 docker run \
