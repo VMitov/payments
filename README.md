@@ -29,3 +29,11 @@ docker run --rm \
     --mount type=bind,source="$(pwd)",target=/go/src/github.com/VMitov/payments
     golang go test github.com/VMitov/payments/...
 ```
+
+### integration tests
+
+1. Start the database as shown above.
+1.
+```
+go test ./... -integration
+```

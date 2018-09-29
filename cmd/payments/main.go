@@ -8,7 +8,7 @@ import (
 
 func main() {
 	addr := flag.String("addr", ":8000", "address:port")
-	db := flag.String("db", "postgres://postgres@localhost:5432", "postgres://user:pass@address:port")
+	db := flag.String("db", "postgres://postgres@localhost:5432/payments?sslmode=disable", "postgres://user:pass@address:port/db")
 	flag.Parse()
 
 	api, err := newAPI(*db)
