@@ -1,12 +1,12 @@
 package payment
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/VMitov/payments/pkg/links"
 	"github.com/jmoiron/sqlx"
-	"github.com/shopspring/decimal"
 )
 
 // Type is the type of the payment resource
@@ -14,29 +14,23 @@ const Type = "Payment"
 
 // Payment is a single payment
 type Payment struct {
-	ID     string `db:"id" json:"id"`
-	Amount int64  `db:"amount" json:"-"`
+	ID         string          `db:"id"         json:"id"`
+	Attributes json.RawMessage `db:"attributes" json:"attributes"`
 }
 
 // NewFromResource returns Payment from Resource
 func NewFromResource(res *Resource) (*Payment, error) {
-	d, err := decimal.NewFromString(res.Data.Amount)
-	if err != nil {
-		return nil, err
-	}
-
 	if res.Data.Payment == nil {
 		res.Data.Payment = &Payment{}
 	}
-	res.Data.Payment.Amount = d.Mul(decimal.New(100, 0)).IntPart()
 	return res.Data.Payment, nil
 }
 
 // Create persist a payment
 func Create(db *sqlx.DB, pay *Payment) (id string, err error) {
 	rows, err := db.Queryx(
-		db.Rebind(`INSERT INTO payments (amount) VALUES (?) RETURNING id`),
-		10021,
+		db.Rebind(`INSERT INTO payments (attributes) VALUES (?) RETURNING id`),
+		string(pay.Attributes),
 	)
 	if err != nil {
 		return "", err
@@ -53,8 +47,8 @@ func Create(db *sqlx.DB, pay *Payment) (id string, err error) {
 // Update updates payment
 func Update(db *sqlx.DB, id string, pay *Payment) error {
 	_, err := db.Exec(
-		db.Rebind(`UPDATE payments SET amount=? WHERE id=?`),
-		pay.Amount, id,
+		db.Rebind(`UPDATE payments SET attributes=? WHERE id=?`),
+		string(pay.Attributes), id,
 	)
 
 	return err
@@ -69,7 +63,7 @@ func Delete(db *sqlx.DB, id string) error {
 // Select gets all payments
 func Select(db *sqlx.DB) ([]Payment, error) {
 	payments := []Payment{}
-	if err := db.Select(&payments, "SELECT * FROM payments"); err != err {
+	if err := db.Select(&payments, "SELECT * FROM payments"); err != nil {
 		return nil, err
 	}
 
@@ -79,7 +73,7 @@ func Select(db *sqlx.DB) ([]Payment, error) {
 // Get gets single payments
 func Get(db *sqlx.DB, id string) (*Payment, error) {
 	payment := Payment{}
-	if err := db.Get(&payment, "SELECT * FROM payments WHERE id=$1", id); err != err {
+	if err := db.Get(&payment, "SELECT * FROM payments WHERE id=$1", id); err != nil {
 		return nil, err
 	}
 
@@ -90,8 +84,7 @@ func Get(db *sqlx.DB, id string) (*Payment, error) {
 type ResourceData struct {
 	*Payment
 
-	Amount string `json:"amount"`
-	Type   string `json:"type"`
+	Type string `json:"type"`
 
 	links.Resource
 }
@@ -100,7 +93,6 @@ func newResourceData(p *Payment, self string) *ResourceData {
 	return &ResourceData{
 		Payment:  p,
 		Type:     Type,
-		Amount:   fmt.Sprintf("%.2f", float64(p.Amount)/100),
 		Resource: links.Resource{Links: links.Links{Self: self}},
 	}
 }
@@ -119,19 +111,19 @@ func NewResource(p *Payment, self string) *Resource {
 
 // Bind implements render.Binder
 func (resource *Resource) Bind(r *http.Request) error {
-	if resource.Data == nil || resource.Data.Type != Type {
+	if resource.Data == nil {
 		return fmt.Errorf("no data")
 	}
 
-	d, err := decimal.NewFromString(resource.Data.Amount)
-	if err != nil {
-		return err
+	if resource.Data.Type != Type {
+		return fmt.Errorf("wrong type")
 	}
 
-	if d.Cmp(decimal.New(0, 0)) < 0 {
-		return fmt.Errorf("negative amount")
+	if resource.Data.Payment == nil || resource.Data.Payment.Attributes == nil {
+		return fmt.Errorf("no payment")
 	}
 
+	// TODO: Validate the attributes json based on the business requirements.
 	return nil
 }
 

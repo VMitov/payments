@@ -2,7 +2,9 @@
     "data": [
         {
             "id": "4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/4ee3a8d8-ca7b-4290-a52c-dd5b6165ec43"
@@ -10,7 +12,9 @@
         },
         {
             "id": "216d4da9-e59a-4cc6-8df3-3da6e7580b77",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/216d4da9-e59a-4cc6-8df3-3da6e7580b77"
@@ -18,7 +22,9 @@
         },
         {
             "id": "7eb8277a-6c91-45e9-8a03-a27f82aca350",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/7eb8277a-6c91-45e9-8a03-a27f82aca350"
@@ -26,7 +32,9 @@
         },
         {
             "id": "97fe60ba-1334-439f-91db-32cc3cde036a",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/97fe60ba-1334-439f-91db-32cc3cde036a"
@@ -34,7 +42,9 @@
         },
         {
             "id": "ab4bbd28-33c6-4231-9b64-0e96190f59ef",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/ab4bbd28-33c6-4231-9b64-0e96190f59ef"
@@ -42,7 +52,9 @@
         },
         {
             "id": "7f172f5c-f810-4ebe-b015-cb1fc24c6b66",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/7f172f5c-f810-4ebe-b015-cb1fc24c6b66"
@@ -50,7 +62,9 @@
         },
         {
             "id": "502758ff-505f-4d81-b9d2-83aa9c01ebe2",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/502758ff-505f-4d81-b9d2-83aa9c01ebe2"
@@ -58,7 +72,9 @@
         },
         {
             "id": "09fe827a-b3c2-4437-b999-6c0e780c0983",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/09fe827a-b3c2-4437-b999-6c0e780c0983"
@@ -66,7 +82,9 @@
         },
         {
             "id": "de1f6882-4dba-485a-a632-a80f59fbe4a6",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/de1f6882-4dba-485a-a632-a80f59fbe4a6"
@@ -74,7 +92,9 @@
         },
         {
             "id": "b71afd98-4fba-40a4-b8f3-087d005187e3",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/b71afd98-4fba-40a4-b8f3-087d005187e3"
@@ -82,7 +102,9 @@
         },
         {
             "id": "dbb89036-4007-47ff-8fab-00bdd5cc4021",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/dbb89036-4007-47ff-8fab-00bdd5cc4021"
@@ -90,7 +112,9 @@
         },
         {
             "id": "52611302-0758-4f69-aa15-c5f55ab7c3eb",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/52611302-0758-4f69-aa15-c5f55ab7c3eb"
@@ -98,7 +122,9 @@
         },
         {
             "id": "6cd862ab-6d40-4a86-8037-77d446b3f6fc",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/6cd862ab-6d40-4a86-8037-77d446b3f6fc"
@@ -106,7 +132,9 @@
         },
         {
             "id": "09a8fe0d-e239-4aff-8098-7923eadd0b98",
-            "amount": "100.21",
+            "attributes": {
+                "amount": "100.21"
+            },
             "type": "Payment",
             "links": {
                 "self": "/payments/09a8fe0d-e239-4aff-8098-7923eadd0b98"

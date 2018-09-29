@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/VMitov/payments/pkg/payment"
@@ -58,12 +59,8 @@ func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pay, err := payment.Get(api.db, paymentID)
+	_, err := payment.Get(api.db, paymentID)
 	if err != nil {
-		render.Render(w, r, errInvalidRequest(err))
-		return
-	}
-	if pay.ID == "" {
 		render.Render(w, r, errNotFound)
 		return
 	}
@@ -90,7 +87,9 @@ func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
 
 func (api *api) listPayments(w http.ResponseWriter, r *http.Request) {
 	payments, err := payment.Select(api.db)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		payments = []payment.Payment{}
+	} else if err != nil {
 		render.Render(w, r, errSystem(err))
 		return
 	}
@@ -110,11 +109,6 @@ func (api *api) getPayment(w http.ResponseWriter, r *http.Request) {
 
 	pay, err := payment.Get(api.db, paymentID)
 	if err != nil {
-		render.Render(w, r, errSystem(err))
-		return
-	}
-
-	if pay.ID == "" {
 		render.Render(w, r, errNotFound)
 		return
 	}
@@ -132,13 +126,8 @@ func (api *api) deletePayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pay, err := payment.Get(api.db, paymentID)
+	_, err := payment.Get(api.db, paymentID)
 	if err != nil {
-		render.Render(w, r, errSystem(err))
-		return
-	}
-
-	if pay.ID == "" {
 		render.Render(w, r, errNotFound)
 		return
 	}
