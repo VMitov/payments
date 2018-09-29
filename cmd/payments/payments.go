@@ -31,13 +31,13 @@ func (api *api) createPayment(w http.ResponseWriter, r *http.Request) {
 
 	id, err := payment.Create(api.db, pay)
 	if err != nil {
-		render.Render(w, r, errInvalidRequest(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 
 	newPay, err := payment.Get(api.db, id)
 	if err != nil {
-		render.Render(w, r, errRender(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 
@@ -60,7 +60,7 @@ func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
 
 	pay, err := payment.Get(api.db, paymentID)
 	if err != nil {
-		render.Render(w, r, errRender(err))
+		render.Render(w, r, errInvalidRequest(err))
 		return
 	}
 	if pay.ID == "" {
@@ -70,18 +70,18 @@ func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
 
 	newPay, err := payment.NewFromResource(data)
 	if err != nil {
-		render.Render(w, r, errInvalidRequest(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 
 	if err := payment.Update(api.db, paymentID, newPay); err != nil {
-		render.Render(w, r, errInvalidRequest(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 
 	newPay, err = payment.Get(api.db, paymentID)
 	if err != nil {
-		render.Render(w, r, errRender(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 
@@ -91,12 +91,12 @@ func (api *api) updatePayment(w http.ResponseWriter, r *http.Request) {
 func (api *api) listPayments(w http.ResponseWriter, r *http.Request) {
 	payments, err := payment.Select(api.db)
 	if err != nil {
-		render.Render(w, r, errRender(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 
 	if err := render.Render(w, r, newPaymentList(payments)); err != nil {
-		render.Render(w, r, errRender(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 }
@@ -110,7 +110,7 @@ func (api *api) getPayment(w http.ResponseWriter, r *http.Request) {
 
 	pay, err := payment.Get(api.db, paymentID)
 	if err != nil {
-		render.Render(w, r, errRender(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 
@@ -120,7 +120,7 @@ func (api *api) getPayment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := render.Render(w, r, newPayment(pay)); err != nil {
-		render.Render(w, r, errRender(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 }
@@ -134,7 +134,7 @@ func (api *api) deletePayment(w http.ResponseWriter, r *http.Request) {
 
 	pay, err := payment.Get(api.db, paymentID)
 	if err != nil {
-		render.Render(w, r, errRender(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 
@@ -144,7 +144,7 @@ func (api *api) deletePayment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := payment.Delete(api.db, paymentID); err != nil {
-		render.Render(w, r, errInvalidRequest(err))
+		render.Render(w, r, errSystem(err))
 		return
 	}
 }
