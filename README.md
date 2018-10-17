@@ -1,4 +1,4 @@
-# Payment API Exacmple
+# Payment API Example
 
 ## Run the service
 
